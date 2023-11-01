@@ -1,0 +1,42 @@
+From fc2b84a2ecd9a403cb602d2de26d6c1804a3ceac Mon Sep 17 00:00:00 2001
+From: Pino Toscano <ptoscano@redhat.com>
+Date: Fri, 17 May 2019 15:18:50 +0200
+Subject: [PATCH 4/9] * src/augtool.c: hopefully fix readline quoting issues
+
+Configure the quoting (also using a detector) and word break characters,
+so it is possible to autocomplete paths with special characters (like
+spaces, which are already quoted by augeas).
+---
+ src/augtool.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/src/augtool.c b/src/augtool.c
+index b42ef630..31a991eb 100644
+--- a/src/augtool.c
++++ b/src/augtool.c
+@@ -267,10 +267,22 @@ static char *get_home_dir(uid_t uid) {
+     return result;
+ }
+ 
++/* Inspired from:
++ * https://thoughtbot.com/blog/tab-completion-in-gnu-readline
++ */
++static int quote_detector(char *str, int index) {
++    return index > 0
++           && str[index - 1] == '\\'
++           && quote_detector(str, index - 1) == 0;
++}
++
+ static void readline_init(void) {
+     rl_readline_name = "augtool";
+     rl_attempted_completion_function = readline_completion;
+     rl_completion_entry_function = readline_path_generator;
++    rl_completer_quote_characters = "\"'";
++    rl_completer_word_break_characters = (char *) " ";
++    rl_char_is_quoted_p = &quote_detector;
+ 
+     /* Set up persistent history */
+     char *home_dir = get_home_dir(getuid());
+-- 
+2.31.1
+

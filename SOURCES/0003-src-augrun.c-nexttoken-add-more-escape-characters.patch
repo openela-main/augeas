@@ -1,0 +1,37 @@
+From 5218c2997b7b77752511ebc61ffa743fd2d8fcbf Mon Sep 17 00:00:00 2001
+From: Pino Toscano <ptoscano@redhat.com>
+Date: Fri, 17 May 2019 13:47:20 +0200
+Subject: [PATCH 3/9] * src/augrun.c (nexttoken): add more escape characters
+
+Synchonize the list of "pass-through" characters with the set in the
+'name_follow' variable in pathx.c: as pathx_escape_name() escapes them,
+make sure that aug_srun() accepts them as arguments.
+---
+ src/augrun.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/src/augrun.c b/src/augrun.c
+index 07f865a9..fd710c5f 100644
+--- a/src/augrun.c
++++ b/src/augrun.c
+@@ -133,8 +133,16 @@ static char *nexttoken(struct command *cmd, char **line, bool path) {
+         copy = true;
+         if (*s == '\\') {
+             switch (*(s+1)) {
++                case ']':
+                 case '[':
+-                case ']':  /* pass both literally */
++                case '|':
++                case '/':
++                case '=':
++                case '(':
++                case ')':
++                case '!':
++                case ',':  /* pass them literally;
++                            * see 'name_follow' in pathx.c */
+                     nescaped = 2;
+                     break;
+                 case 't':  /* insert tab */
+-- 
+2.31.1
+

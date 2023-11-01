@@ -1,0 +1,59 @@
+From eb7c72cfffa5360a65be270c5554abf36739e382 Mon Sep 17 00:00:00 2001
+From: Pino Toscano <ptoscano@redhat.com>
+Date: Tue, 4 Feb 2020 18:05:05 +0100
+Subject: [PATCH 6/9] Systemd: fix parsing of envvars with spaces (#659)
+
+Allow spaces inside of values quoted with single or double quotes.
+
+This amends commit f64d8bc7a7670f3af2549fdcefb64c2b5f22cd0d that added
+support for quoted values.
+---
+ lenses/systemd.aug            | 4 ++--
+ lenses/tests/test_systemd.aug | 9 +++++++++
+ 2 files changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/lenses/systemd.aug b/lenses/systemd.aug
+index b868e86f..77434367 100644
+--- a/lenses/systemd.aug
++++ b/lenses/systemd.aug
+@@ -132,8 +132,8 @@ let entry_env =
+      let envkv (env_val:lens) = key env_key . Util.del_str "=" . env_val
+      (* bare has no spaces, and is optionally quoted *)
+   in let bare = Quote.do_quote_opt (envkv (store /[^#'" \t\n]*[^#'" \t\n\\]/)?)
+-  in let bare_dqval = envkv (store /"[^#" \t\n]*[^#" \t\n\\]"/)
+-  in let bare_sqval = envkv (store /'[^#' \t\n]*[^#' \t\n\\]'/)
++  in let bare_dqval = envkv (store /"[^#"\t\n]*[^#"\t\n\\]"/)
++  in let bare_sqval = envkv (store /'[^#'\t\n]*[^#'\t\n\\]'/)
+      (* quoted has at least one space, and must be quoted *)
+   in let quoted = Quote.do_quote (envkv (store /[^#"'\n]*[ \t]+[^#"'\n]*/))
+   in let envkv_quoted = [ bare ] | [ bare_dqval ] | [ bare_sqval ] | [ quoted ]
+diff --git a/lenses/tests/test_systemd.aug b/lenses/tests/test_systemd.aug
+index 3397456e..19c57075 100644
+--- a/lenses/tests/test_systemd.aug
++++ b/lenses/tests/test_systemd.aug
+@@ -206,6 +206,8 @@ FOO=BAR
+ Environment=\"LANG=foo bar\" FOO=BAR
+ Environment=OPTIONS=\"-LS0-6d\"
+ Environment=OPTIONS='-LS0-6d'
++Environment=VAR=\"with some spaces\" VAR2='more spaces'
++Environment=VAR='with some spaces'
+ "
+ (* Test: Systemd.lns *)
+ test Systemd.lns get env =
+@@ -247,6 +249,13 @@ test Systemd.lns get env =
+     { "Environment"
+       { "OPTIONS" = "'-LS0-6d'" }
+     }
++    { "Environment"
++      { "VAR" = "\"with some spaces\"" }
++      { "VAR2" = "'more spaces'" }
++    }
++    { "Environment"
++      { "VAR" = "'with some spaces'" }
++    }
+   }
+ 
+ (* Variable: unit *)
+-- 
+2.31.1
+

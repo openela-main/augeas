@@ -1,0 +1,94 @@
+From eb2dc4ec0879290f42e35a7facc345ca1c70ba69 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Rapha=C3=ABl=20Pinson?= <raphael.pinson@camptocamp.com>
+Date: Tue, 12 Nov 2019 13:33:26 +0100
+Subject: [PATCH 2/9] Rsyslog: support multiple actions in filters and
+ selectors (#653)
+
+(cherry picked from commit 5181105bae84dc7819a00886f068ad0bb4e6d05a)
+---
+ lenses/rsyslog.aug            | 11 ++++++++---
+ lenses/tests/test_rsyslog.aug | 37 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 45 insertions(+), 3 deletions(-)
+
+diff --git a/lenses/rsyslog.aug b/lenses/rsyslog.aug
+index 7b9f7dc9..29ff9b10 100644
+--- a/lenses/rsyslog.aug
++++ b/lenses/rsyslog.aug
+@@ -65,11 +65,17 @@ let hostname = [ label "hostname" .
+       ( Syslog.plus | [ Build.xchgs "-" "reverse" ] ) .
+       Syslog.hostnames . Util.eol .  Syslog.entries ]
+ 
++(* View: actions *)
++let actions =
++     let prop_act  = [ label "action" . action ]
++  in let act_sep = del /[ \t]*\n&[ \t]*/ "\n& "
++  in Build.opt_list prop_act act_sep
++
+ (* View: entry
+    An entry contains selectors and an action
+ *)
+ let entry = [ label "entry" . Syslog.selectors . Syslog.sep_tab .
+-              [ label "action" . action ] . Util.eol ]
++              actions . Util.eol ]
+ 
+ (* View: prop_filter
+    Parses property-based filters, which start with ":" and the property name *)
+@@ -78,9 +84,8 @@ let prop_filter =
+   in let prop_name = [ Util.del_str ":" . label "property" . store Rx.word ]
+   in let prop_oper = [ label "operation" . store /[A-Za-z!-]+/ ]
+   in let prop_val  = [ label "value" . Quote.do_dquote (store /[^\n"]*/) ]
+-  in let prop_act  = [ label "action" . action ]
+   in [ label "filter" . prop_name . sep . prop_oper . sep . prop_val .
+-       Sep.space . prop_act . Util.eol ]
++       Sep.space . actions . Util.eol ]
+ 
+ let entries = ( Syslog.empty | Util.comment | entry | macro | config_object | prop_filter )*
+ 
+diff --git a/lenses/tests/test_rsyslog.aug b/lenses/tests/test_rsyslog.aug
+index 9011a2b3..e83613a2 100644
+--- a/lenses/tests/test_rsyslog.aug
++++ b/lenses/tests/test_rsyslog.aug
+@@ -222,3 +222,40 @@ test Rsyslog.lns get "*.* ?DynamicFile\n" =
+       { "dynamic" = "DynamicFile" }
+     }
+   }
++
++(* Multiple actions in filters and selectors *)
++test Rsyslog.lns get ":msg, startswith, \"iptables:\" -/var/log/iptables.log
++& ~
++# Save boot messages also to boot.log
++local7.*                                                /var/log/boot.log
++local3.err                                              /var/log/nfsen/nfsenlog
++& /var/log/also.log
++\n" =
++  { "filter"
++    { "property" = "msg" }
++    { "operation" = "startswith" }
++    { "value" = "iptables:" }
++    { "action"
++      { "no_sync" }
++      { "file" = "/var/log/iptables.log" } }
++    { "action"
++      { "discard" } }
++  }
++  { "#comment" = "Save boot messages also to boot.log" }
++  { "entry"
++    { "selector"
++      { "facility" = "local7" }
++      { "level" = "*" } }
++    { "action"
++      { "file" = "/var/log/boot.log" } }
++  }
++  { "entry"
++    { "selector"
++      { "facility" = "local3" }
++      { "level" = "err" } }
++    { "action"
++      { "file" = "/var/log/nfsen/nfsenlog" } }
++    { "action"
++      { "file" = "/var/log/also.log" } } }
++  {  }
++
+-- 
+2.31.1
+
