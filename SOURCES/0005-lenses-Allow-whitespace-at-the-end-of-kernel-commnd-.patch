@@ -1,0 +1,44 @@
+From f4a9ca77e5dba3659cfadd9e12ba96b32befdaab Mon Sep 17 00:00:00 2001
+From: rwmjones <rjones@redhat.com>
+Date: Sun, 5 Mar 2023 10:30:43 +0000
+Subject: [PATCH 5/5] lenses: Allow whitespace at the end of kernel commnd line
+ (#798)
+
+Reported-by: Yongkui Guo
+Fixes: https://bugzilla.redhat.com/show_bug.cgi?id=2159282
+
+Signed-off-by: Richard W.M. Jones <rjones@redhat.com>
+(cherry picked from commit 801aa73db3c356378467622a7e02dea21ccf4332)
+---
+ lenses/cmdline.aug            | 2 +-
+ lenses/tests/test_cmdline.aug | 1 +
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/lenses/cmdline.aug b/lenses/cmdline.aug
+index b8b5176d..30e9aac7 100644
+--- a/lenses/cmdline.aug
++++ b/lenses/cmdline.aug
+@@ -13,7 +13,7 @@ module Cmdline =
+ 
+ let entry = [ key Rx.word . Util.del_str "=" . store Rx.no_spaces ] | [ key Rx.word ]
+ 
+-let lns = (Build.opt_list entry Sep.space)? . del /\n?/ ""
++let lns = (Build.opt_list entry Sep.space)? . del /[ \t]*\n?/ ""
+ 
+ let filter = incl "/etc/kernel/cmdline"
+            . incl "/proc/cmdline"
+diff --git a/lenses/tests/test_cmdline.aug b/lenses/tests/test_cmdline.aug
+index 0624a0b2..77a429d8 100644
+--- a/lenses/tests/test_cmdline.aug
++++ b/lenses/tests/test_cmdline.aug
+@@ -4,6 +4,7 @@ let lns = Cmdline.lns
+ 
+ test lns get "foo\nbar" = *
+ test lns get "foo\n" = { "foo" }
++test lns get "foo \n" = { "foo" }
+ test lns get "foo" = { "foo" }
+ test lns get "foo bar" = { "foo" } { "bar" }
+ test lns get "foo    bar" = { "foo" } { "bar" }
+-- 
+2.31.1
+
