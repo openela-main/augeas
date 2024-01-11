@@ -1,0 +1,85 @@
+From efd61b77563489ca0fa21904cc1fecfc482afd06 Mon Sep 17 00:00:00 2001
+From: granquet <ranquet.guillaume@gmail.com>
+Date: Tue, 6 Oct 2020 23:03:18 +0200
+Subject: [PATCH 7/9] Ssh: add Match keyword support (#695)
+
+Signed-off-by: Guillaume Ranquet <guillaume-externe.ranquet@edf.fr>
+---
+ lenses/ssh.aug            | 19 +++++++++++++++++--
+ lenses/tests/test_ssh.aug | 12 ++++++++++++
+ 2 files changed, 29 insertions(+), 2 deletions(-)
+
+diff --git a/lenses/ssh.aug b/lenses/ssh.aug
+index 4e731581..c140c9a9 100644
+--- a/lenses/ssh.aug
++++ b/lenses/ssh.aug
+@@ -92,7 +92,7 @@ module Ssh =
+                         | rekey_limit
+ 
+     let key_re = /[A-Za-z0-9]+/
+-               - /SendEnv|Host|ProxyCommand|RemoteForward|LocalForward|MACs|Ciphers|(HostKey|Kex)Algorithms|PubkeyAcceptedKeyTypes|GlobalKnownHostsFile|RekeyLimit/i
++               - /SendEnv|Host|Match|ProxyCommand|RemoteForward|LocalForward|MACs|Ciphers|(HostKey|Kex)Algorithms|PubkeyAcceptedKeyTypes|GlobalKnownHostsFile|RekeyLimit/i
+ 
+ 
+     let other_entry = [ indent . key key_re
+@@ -105,11 +105,26 @@ module Ssh =
+     let host = [ key /Host/i . spc . value_to_eol . eol . entry* ]
+ 
+ 
++   let condition_entry =
++    let value = store  /[^ \t\r\n=]+/ in
++    [ spc . key /[A-Za-z0-9]+/ . spc . value ]
++
++   let match_cond =
++     [ label "Condition" . condition_entry+ . eol ]
++
++   let match_entry = entry
++
++   let match =
++     [ key /Match/i . match_cond
++        . [ label "Settings" .  match_entry+ ]
++     ]
++
++
+ (************************************************************************
+  * Group:                 LENS
+  *************************************************************************)
+ 
+-    let lns = entry* . host*
++    let lns = entry* . (host | match)*
+ 
+     let xfm = transform lns (incl "/etc/ssh/ssh_config" .
+                              incl (Sys.getenv("HOME") . "/.ssh/config") .
+diff --git a/lenses/tests/test_ssh.aug b/lenses/tests/test_ssh.aug
+index f5fca252..456624e4 100644
+--- a/lenses/tests/test_ssh.aug
++++ b/lenses/tests/test_ssh.aug
+@@ -5,6 +5,9 @@ module Test_ssh =
+ "# start
+ IdentityFile /etc/ssh/identity.asc
+ 
++Match final all
++   GSSAPIAuthentication yes
++
+ Host suse.cz
+    ForwardAgent yes
+ SendEnv LC_LANG
+@@ -30,6 +33,15 @@ PubkeyAcceptedKeyTypes ssh-ed25519-cert-v01@openssh.com,ssh-ed25519,ssh-rsa-cert
+     { "#comment" = "start" }
+     { "IdentityFile" = "/etc/ssh/identity.asc" }
+     { }
++    { "Match"
++      { "Condition"
++        { "final" = "all" }
++      }
++      { "Settings"
++        { "GSSAPIAuthentication" = "yes" }
++        {  }
++      }
++    }
+     { "Host"	= "suse.cz"
+ 	{ "ForwardAgent"  = "yes" }
+ 	{ "SendEnv"
+-- 
+2.31.1
+

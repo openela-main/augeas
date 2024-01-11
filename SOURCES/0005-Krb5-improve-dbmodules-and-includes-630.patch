@@ -1,0 +1,133 @@
+From 1b4d6a9918b8bcbc06af4ce99a48cd66fed97196 Mon Sep 17 00:00:00 2001
+From: Pino Toscano <ptoscano@redhat.com>
+Date: Tue, 4 Feb 2020 17:54:22 +0100
+Subject: [PATCH 5/9] Krb5: improve [dbmodules] and includes (#630)
+
+* Krb5: fix/revamp parsing of [dbmodules] subsection
+
+The [dbmodules] subsection so far was parsed much like the [dbdefaults]
+one, and thus it did not handle realms.
+
+Revamp it a bit to handle realms, and specify the only keyword not in
+realm subsections.
+
+* Krb5: allow include/includedir directives everywhere
+
+MIT Kerberos allows this, so do not restrict them only before any other
+section.
+---
+ lenses/krb5.aug            | 27 +++++++++++++++++++--------
+ lenses/tests/test_krb5.aug | 36 +++++++++++++++++++++++++++++++++++-
+ 2 files changed, 54 insertions(+), 9 deletions(-)
+
+diff --git a/lenses/krb5.aug b/lenses/krb5.aug
+index 46c22656..6b509c42 100644
+--- a/lenses/krb5.aug
++++ b/lenses/krb5.aug
+@@ -21,10 +21,11 @@ let closebr = del /[ \t]*\}/ "}"
+    and realms in the [appdefaults] section.
+ *)
+ 
++let include_re = /include(dir)?/
+ let realm_re = /[A-Z0-9][.a-zA-Z0-9-]*/
+ let realm_anycase_re = /[A-Za-z0-9][.a-zA-Z0-9-]*/
+ let app_re = /[a-z][a-zA-Z0-9_]*/
+-let name_re = /[.a-zA-Z0-9_-]+/
++let name_re = /[.a-zA-Z0-9_-]+/ - include_re
+ 
+ let value_br = store /[^;# \t\r\n{}]+/
+ let value = store /[^;# \t\r\n]+/
+@@ -130,10 +131,19 @@ let dbdefaults =
+     simple_section "dbdefaults" keys
+ 
+ let dbmodules =
+-  let keys = /db_library|ldap_kerberos_container_dn|ldap_kdc_dn/
+-    |/ldap_kadmind_dn|ldap_service_password_file|ldap_servers/
+-    |/ldap_conns_per_server/ in
+-    simple_section "dbmodules" keys
++  let subsec_key = /database_name|db_library|disable_last_success/
++    |/disable_lockout|ldap_conns_per_server|ldap_(kdc|kadmind)_dn/
++    |/ldap_(kdc|kadmind)_sasl_mech|ldap_(kdc|kadmind)_sasl_authcid/
++    |/ldap_(kdc|kadmind)_sasl_authzid|ldap_(kdc|kadmind)_sasl_realm/
++    |/ldap_kerberos_container_dn|ldap_servers/
++    |/ldap_service_password_file|mapsize|max_readers|nosync/
++    |/unlockiter/ in
++  let subsec_option = subsec_entry subsec_key eq comment in
++  let key = /db_module_dir/ in
++  let option = entry key eq value comment in
++  let realm = [ indent . label "realm" . store realm_re .
++                  eq_openbr . (subsec_option)* . closebr . eol ] in
++    record "dbmodules" (option|realm)
+ 
+ (* This section is not documented in the krb5.conf manpage,
+    but the Fermi example uses it. *)
+@@ -152,11 +162,12 @@ let kdc =
+ let pam =
+   simple_section "pam" name_re
+ 
+-let includes = Build.key_value_line /include(dir)?/ Sep.space (store Rx.fspath)
++let includes = Build.key_value_line include_re Sep.space (store Rx.fspath)
++let include_lines = includes . (comment|empty)*
+ 
+-let lns = (comment|empty|includes)* .
++let lns = (comment|empty)* .
+   (libdefaults|login|appdefaults|realms|domain_realm
+-  |logging|capaths|dbdefaults|dbmodules|instance_mapping|kdc|pam)*
++  |logging|capaths|dbdefaults|dbmodules|instance_mapping|kdc|pam|include_lines)*
+ 
+ let filter = (incl "/etc/krb5.conf.d/*.conf")
+            . (incl "/etc/krb5.conf")
+diff --git a/lenses/tests/test_krb5.aug b/lenses/tests/test_krb5.aug
+index f746543b..10b87605 100644
+--- a/lenses/tests/test_krb5.aug
++++ b/lenses/tests/test_krb5.aug
+@@ -1029,7 +1029,7 @@ default_ccache_name = KEYRING:persistent:%{uid}\n" =
+     {  }
+     { "default_ccache_name" = "KEYRING:persistent:%{uid}" } }
+ 
+-(* Include(dir) test *)
++(* Include(dir) tests *)
+ let include_test = "include /etc/krb5.other_conf.d/other.conf
+ includedir /etc/krb5.conf.d/
+ "
+@@ -1037,3 +1037,37 @@ includedir /etc/krb5.conf.d/
+ test Krb5.lns get include_test =
+   { "include" = "/etc/krb5.other_conf.d/other.conf" }
+   { "includedir" = "/etc/krb5.conf.d/" }
++
++let include2_test = "[logging]
++ default = FILE:/var/log/krb5libs.log
++
++include /etc/krb5.other_conf.d/other.conf
++
++includedir /etc/krb5.conf.d/
++"
++
++test Krb5.lns get include2_test =
++  { "logging"
++    { "default"
++      { "file" = "/var/log/krb5libs.log" } }
++    {  }
++  }
++  { "include" = "/etc/krb5.other_conf.d/other.conf" }
++  {  }
++  { "includedir" = "/etc/krb5.conf.d/" }
++
++(* [dbmodules] test *)
++let dbmodules_test = "[dbmodules]
++    ATHENA.MIT.EDU = {
++        disable_last_success = true
++    }
++    db_module_dir = /some/path
++"
++
++test Krb5.lns get dbmodules_test =
++  { "dbmodules"
++    { "realm" = "ATHENA.MIT.EDU"
++      { "disable_last_success" = "true" }
++    }
++    { "db_module_dir" = "/some/path" }
++  }
+-- 
+2.31.1
+

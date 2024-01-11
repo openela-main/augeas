@@ -1,0 +1,59 @@
+From e666bf968071a9976bd44e1eb65645eb9d51b5cb Mon Sep 17 00:00:00 2001
+From: Pino Toscano <ptoscano@redhat.com>
+Date: Wed, 23 Oct 2019 11:35:57 +0200
+Subject: [PATCH 1/9] Grub: support '+' in kernel command line option names
+ (#647)
+
+This way it is possible to parse files that pass options with '+' in the
+name to the kernel.
+
+(cherry picked from commit 2ba77589baee1bf2d43d3a49f8e6f3eb522e5bba)
+---
+ lenses/grub.aug            |  2 +-
+ lenses/tests/test_grub.aug | 17 +++++++++++++++++
+ 2 files changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/lenses/grub.aug b/lenses/grub.aug
+index 24ad39bc..82c1c37a 100644
+--- a/lenses/grub.aug
++++ b/lenses/grub.aug
+@@ -196,7 +196,7 @@ module Grub =
+     (* View: kernel_args
+         Parse the file name and args on a kernel or module line. *)
+     let kernel_args =
+-      let arg = /[A-Za-z0-9_.$-]+/ - /type|no-mem-option/  in
++      let arg = /[A-Za-z0-9_.$\+-]+/ - /type|no-mem-option/  in
+       store /(\([a-z0-9,]+\))?\/[^ \t\n]*/ .
+             (spc . multiboot_arg)? .
+             (spc . [ key arg . (eq. store /([^ \t\n])*/)?])* . eol
+diff --git a/lenses/tests/test_grub.aug b/lenses/tests/test_grub.aug
+index 75657203..e50bdc4f 100644
+--- a/lenses/tests/test_grub.aug
++++ b/lenses/tests/test_grub.aug
+@@ -258,6 +258,23 @@ password --encrypted ^9^32kwzzX./3WISQ0C /boot/grub/custom.lst
+       { "md5" }
+     } }
+ 
++    (* Test kernel options with different special characters. *)
++    test Grub.lns get "title Fedora (2.6.24.4-64.fc8)
++        root (hd0,0)
++        kernel /vmlinuz-2.6.24.4-64.fc8 ro root=/dev/vg00/lv00 with.dot=1 with-dash=1 with_underscore=1 with+plus=1
++        initrd /initrd-2.6.24.4-64.fc8.img\n" =
++  { "title" = "Fedora (2.6.24.4-64.fc8)"
++    { "root" = "(hd0,0)" }
++    { "kernel" = "/vmlinuz-2.6.24.4-64.fc8"
++      { "ro" }
++      { "root" = "/dev/vg00/lv00" }
++      { "with.dot" = "1" }
++      { "with-dash" = "1" }
++      { "with_underscore" = "1" }
++      { "with+plus" = "1" }
++    }
++    { "initrd" = "/initrd-2.6.24.4-64.fc8.img" } }
++
+   (* Test parsing of invalid entries via menu_error *)
+   test Grub.lns get "default=0\ncrud=no\n" =
+   { "default" = "0" }
+-- 
+2.31.1
+
