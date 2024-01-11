@@ -1,6 +1,6 @@
 Name:           augeas
 Version:        1.13.0
-Release:        3%{?dist}
+Release:        5%{?dist}
 Summary:        A library for changing configuration files
 
 License:        LGPLv2+
@@ -25,6 +25,14 @@ Patch2:         0002-Kdump-parse-auto_reset_crashkernel-754.patch
 # Fix parsing of /etc/selinux/semanage.conf in RHEL 9 (RHBZ#2077120).
 # Upstream commit a3ba6e2d32b95507e2474a219e788ac3d54bc4a1
 Patch3:         0003-semanage-Fix-parsing-of-ignoredirs-758.patch
+
+# Fix parsing of /usr/lib/tmpfiles.d/provision.conf
+# Upstream commit 41b2a33ff02687fa53d69a012a1d47141b196a86
+Patch4:         0004-Tmpfiles-allow-for-letter-types-allow-as-prefix-for-.patch
+
+# Fix parsing of /etc/kernel/cmdline
+# Upstream commit 801aa73db3c356378467622a7e02dea21ccf4332
+Patch5:         0005-lenses-Allow-whitespace-at-the-end-of-kernel-commnd-.patch
 
 Provides:       bundled(gnulib)
 
@@ -142,6 +150,11 @@ rm -f $RPM_BUILD_ROOT/usr/bin/dump
 %{_libdir}/libfa.a
 
 %changelog
+* Tue Apr 04 2023 Richard W.M. Jones <rjones@redhat.com> - 1.13.0-4
+- Fix parsing of /usr/lib/tmpfiles.d/provision.conf
+- Fix parsing of /etc/kernel/cmdline
+  resolves: rhbz#2155136, rhbz#2159282
+
 * Thu Oct 06 2022 Richard W.M. Jones <rjones@redhat.com> - 1.13.0-3
 - Fix parsing of /etc/selinux/semanage.conf in RHEL 9
   resolves: rhbz#2077120

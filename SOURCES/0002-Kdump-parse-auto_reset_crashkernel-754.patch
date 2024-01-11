@@ -1,7 +1,7 @@
 From e0bce2e8c21ccc69729676e8dc6fa1e541aedee2 Mon Sep 17 00:00:00 2001
 From: Laszlo Ersek <lersek@users.noreply.github.com>
 Date: Wed, 20 Apr 2022 10:13:06 +0200
-Subject: [PATCH 2/3] Kdump: parse "auto_reset_crashkernel" (#754)
+Subject: [PATCH 2/5] Kdump: parse "auto_reset_crashkernel" (#754)
 
 The "auto_reset_crashkernel" keyword was introduced in the following
 kexec-tools patch set:

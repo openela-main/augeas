@@ -1,7 +1,7 @@
 From aca3def462ab141c3991a2d27c44341b809cf970 Mon Sep 17 00:00:00 2001
 From: rwmjones <rjones@redhat.com>
 Date: Thu, 6 Oct 2022 12:15:56 +0100
-Subject: [PATCH 3/3] semanage: Fix parsing of ignoredirs (#758)
+Subject: [PATCH 3/5] semanage: Fix parsing of ignoredirs (#758)
 
 From /etc/selinux/semanage.conf from a RHEL 9.1 system, this line
 caused problems:
