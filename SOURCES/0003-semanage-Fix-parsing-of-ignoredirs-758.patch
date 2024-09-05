@@ -1,7 +1,7 @@
-From aca3def462ab141c3991a2d27c44341b809cf970 Mon Sep 17 00:00:00 2001
+From 864ca7e256a3cf7236bf4d096e265672baed2fbb Mon Sep 17 00:00:00 2001
 From: rwmjones <rjones@redhat.com>
 Date: Thu, 6 Oct 2022 12:15:56 +0100
-Subject: [PATCH 3/5] semanage: Fix parsing of ignoredirs (#758)
+Subject: [PATCH 3/6] semanage: Fix parsing of ignoredirs (#758)
 
 From /etc/selinux/semanage.conf from a RHEL 9.1 system, this line
 caused problems:
@@ -132,7 +132,7 @@ index 00000000..406f16f1
 +args = -r $@
 +[end]
 diff --git a/tests/xpath.tests b/tests/xpath.tests
-index 4278e433..71c998b8 100644
+index a7db8d83..feab7584 100644
 --- a/tests/xpath.tests
 +++ b/tests/xpath.tests
 @@ -109,6 +109,7 @@ test descendant-or-self /files/descendant-or-self :: 4
@@ -144,5 +144,5 @@ index 4278e433..71c998b8 100644
       /files/etc/pam.d/login/4
       /files/etc/pam.d/newrole/4
 -- 
-2.31.1
+2.45.2
 

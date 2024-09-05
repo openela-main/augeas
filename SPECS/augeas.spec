@@ -1,6 +1,6 @@
 Name:           augeas
 Version:        1.13.0
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        A library for changing configuration files
 
 License:        LGPLv2+
@@ -33,6 +33,10 @@ Patch4:         0004-Tmpfiles-allow-for-letter-types-allow-as-prefix-for-.patch
 # Fix parsing of /etc/kernel/cmdline
 # Upstream commit 801aa73db3c356378467622a7e02dea21ccf4332
 Patch5:         0005-lenses-Allow-whitespace-at-the-end-of-kernel-commnd-.patch
+
+# Fix parsing of /etc/fstab
+# Upstream commit 5246ef07381033a9b20426370156dae9f8f97a2c
+Patch6:         0006-lenses-fstab.aug-Allow-comma-after-the-last-option-8.patch
 
 Provides:       bundled(gnulib)
 
@@ -150,6 +154,10 @@ rm -f $RPM_BUILD_ROOT/usr/bin/dump
 %{_libdir}/libfa.a
 
 %changelog
+* Fri Jul 19 2024 Cosmin Tupangiu <cosmin@redhat.com> - 1.13.0-5
+- Fix parsing /etc/fstab by allowing comma after last option
+  resolves: RHEL-56992
+
 * Tue Apr 04 2023 Richard W.M. Jones <rjones@redhat.com> - 1.13.0-4
 - Fix parsing of /usr/lib/tmpfiles.d/provision.conf
 - Fix parsing of /etc/kernel/cmdline

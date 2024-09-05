@@ -1,0 +1,65 @@
+From ac6c3962d38c14d887fe7486330c19d477ab034d Mon Sep 17 00:00:00 2001
+From: Cosmin Tupangiu <cosmin@redhat.com>
+Date: Thu, 18 Jul 2024 13:02:20 +0200
+Subject: [PATCH 6/6] lenses/fstab.aug: Allow comma after the last option
+ (#838)
+
+This PR adds a new lens that allows a comma after the last option:
+
+/dev/mapper/foo-bar / xfs defaults, 0 0
+
+Fixes: https://issues.redhat.com/browse/RHEL-35873
+
+Signed-off-by: Cosmin Tupangiu <cosmin@redhat.com>
+(cherry picked from commit 5246ef07381033a9b20426370156dae9f8f97a2c)
+---
+ lenses/fstab.aug            |  3 ++-
+ lenses/tests/test_fstab.aug | 11 +++++++++++
+ 2 files changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/lenses/fstab.aug b/lenses/fstab.aug
+index 2e549557..c653c489 100644
+--- a/lenses/fstab.aug
++++ b/lenses/fstab.aug
+@@ -5,6 +5,7 @@ module Fstab =
+ 
+   let sep_tab = Sep.tab
+   let sep_spc = Sep.space
++  let sep_comma_tab = del /,?[ \t]+/ "\t"
+   let comma   = Sep.comma
+   let eol     = Util.eol
+ 
+@@ -28,7 +29,7 @@ module Fstab =
+                    [ label "file" . store file ] . sep_tab .
+                    comma_sep_list "vfstype" .
+                    (sep_tab . comma_sep_list "opt" .
+-                    (sep_tab . [ label "dump" . store /[0-9]+/ ] .
++                    (sep_comma_tab . [ label "dump" . store /[0-9]+/ ] .
+                      ( sep_spc . [ label "passno" . store /[0-9]+/ ])? )? )?
+                  . Util.comment_or_eol ]
+ 
+diff --git a/lenses/tests/test_fstab.aug b/lenses/tests/test_fstab.aug
+index 438f619a..4a912e59 100644
+--- a/lenses/tests/test_fstab.aug
++++ b/lenses/tests/test_fstab.aug
+@@ -156,6 +156,17 @@ module Test_fstab =
+     { "#comment" = "device at install: /dev/sda3" }
+   }
+ 
++  (* Bug #832 - Allow comma after the last option *)
++  test Fstab.lns get "/dev/mapper/foo-bar / xfs defaults, 0 0\n" =
++  { "1"
++    { "spec" = "/dev/mapper/foo-bar" }
++    { "file" = "/" }
++    { "vfstype" = "xfs" }
++    { "opt" = "defaults" }
++    { "dump" = "0" }
++    { "passno" = "0" }
++  }
++
+ (* Local Variables: *)
+ (* mode: caml       *)
+ (* End:             *)
+-- 
+2.45.2
+

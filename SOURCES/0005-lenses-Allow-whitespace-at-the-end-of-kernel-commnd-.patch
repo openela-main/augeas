@@ -1,7 +1,7 @@
-From f4a9ca77e5dba3659cfadd9e12ba96b32befdaab Mon Sep 17 00:00:00 2001
+From 61a489a7c9f276be8bb717c4d532beebc2b64fef Mon Sep 17 00:00:00 2001
 From: rwmjones <rjones@redhat.com>
 Date: Sun, 5 Mar 2023 10:30:43 +0000
-Subject: [PATCH 5/5] lenses: Allow whitespace at the end of kernel commnd line
+Subject: [PATCH 5/6] lenses: Allow whitespace at the end of kernel commnd line
  (#798)
 
 Reported-by: Yongkui Guo
@@ -40,5 +40,5 @@ index 0624a0b2..77a429d8 100644
  test lns get "foo bar" = { "foo" } { "bar" }
  test lns get "foo    bar" = { "foo" } { "bar" }
 -- 
-2.31.1
+2.45.2
 

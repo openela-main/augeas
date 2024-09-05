@@ -1,7 +1,7 @@
-From 34749f9ea1af8e3fad9e60891beda0fe786cb0f2 Mon Sep 17 00:00:00 2001
+From c696b4851f057a0340ce6d445bac22078d333a61 Mon Sep 17 00:00:00 2001
 From: Pino Toscano <ptoscano@redhat.com>
 Date: Fri, 24 Mar 2023 11:26:46 +0100
-Subject: [PATCH 4/5] Tmpfiles: allow '=', '~', '^' for letter types, allow ":"
+Subject: [PATCH 4/6] Tmpfiles: allow '=', '~', '^' for letter types, allow ":"
  as prefix for the mode
 
 * Tmpfiles: allow '=', '~', '^' for letter types
@@ -160,5 +160,5 @@ index 01b3003a..1163c84a 100644
    (* View: age
  "-", or one of the formats seen in the manpage: 10d, 5seconds, 1y5days.
 -- 
-2.31.1
+2.45.2
 
