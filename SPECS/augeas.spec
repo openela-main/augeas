@@ -1,42 +1,18 @@
 Name:           augeas
-Version:        1.13.0
-Release:        6%{?dist}
+Version:        1.14.1
+Release:        2%{?dist}
 Summary:        A library for changing configuration files
 
-License:        LGPLv2+
+License:        LGPL-2.0-or-later AND LGPL-2.1-only AND LGPL-2.1-or-later AND (GPL-3.0-or-later WITH Bison-exception-2.2) AND Kazlib AND GPL-2.0-or-later AND BSD-2-Clause AND LicenseRef-Fedora-Public-Domain
 URL:            http://augeas.net/
 
-# The upstream release tarballs on github don't work, see:
-# https://github.com/hercules-team/augeas/pull/744
 # The website release tarballs were not created for 1.13:
 # http://download.augeas.net/
-#Source0:        https://github.com/hercules-team/augeas/archive/refs/tags/release-%{version}.tar.gz
-# So I had to create a tarball myself using make dist.
-Source0:        %{name}-%{version}.tar.gz
-
-# Add new directives and options for chrony.
-# Upstream commit 5f3a566511626c35f69961598f1f332db01ed7a1
-Patch1:         0001-Chrony-add-new-directives-and-options-745.patch
-
-# Parse auto_reset_crashkernel in kdump (RHBZ#2042772).
-# Upstream commit 288a028da531a5f58d9ee89bc29fd73e7483bf24
-Patch2:         0002-Kdump-parse-auto_reset_crashkernel-754.patch
-
-# Fix parsing of /etc/selinux/semanage.conf in RHEL 9 (RHBZ#2077120).
-# Upstream commit a3ba6e2d32b95507e2474a219e788ac3d54bc4a1
-Patch3:         0003-semanage-Fix-parsing-of-ignoredirs-758.patch
-
-# Fix parsing of /usr/lib/tmpfiles.d/provision.conf
-# Upstream commit 41b2a33ff02687fa53d69a012a1d47141b196a86
-Patch4:         0004-Tmpfiles-allow-for-letter-types-allow-as-prefix-for-.patch
-
-# Fix parsing of /etc/kernel/cmdline
-# Upstream commit 801aa73db3c356378467622a7e02dea21ccf4332
-Patch5:         0005-lenses-Allow-whitespace-at-the-end-of-kernel-commnd-.patch
+Source0:        https://github.com/hercules-team/augeas/releases/download/release-%{version}/%{name}-%{version}.tar.gz
 
 # Fix parsing of /etc/fstab
 # Upstream commit 5246ef07381033a9b20426370156dae9f8f97a2c
-Patch6:         0006-lenses-fstab.aug-Allow-comma-after-the-last-option-8.patch
+Patch:          0001-lenses-fstab.aug-Allow-comma-after-the-last-option-8.patch
 
 Provides:       bundled(gnulib)
 
@@ -45,6 +21,10 @@ BuildRequires:  gcc
 BuildRequires:  readline-devel
 BuildRequires:  libselinux-devel
 BuildRequires:  libxml2-devel
+BuildRequires:  bash-completion
+%if !0%{?rhel}
+BuildRequires:  bash-completion-devel
+%endif
 
 Requires:       %{name}-libs = %{version}-%{release}
 
@@ -88,6 +68,19 @@ The %{name}-static package contains static libraries needed to produce
 static builds using %{name}.
 
 
+%package bash-completion
+Summary:       Bash tab-completion for %{name}
+BuildArch:     noarch
+Requires:      bash-completion >= 2.0
+# Don't use _isa here because it's a noarch package.  This dependency
+# is just to ensure that the subpackage is updated along with augeas.
+Requires:      %{name} = %{version}-%{release}
+
+
+%description bash-completion
+Install this package if you want intelligent bash tab-completion
+for %{name}.
+
 
 %prep
 %autosetup -p1
@@ -130,6 +123,7 @@ rm -f $RPM_BUILD_ROOT/usr/bin/dump
 %files
 %{_bindir}/augmatch
 %{_bindir}/augparse
+%{_bindir}/augprint
 %{_bindir}/augtool
 %{_bindir}/fadot
 %doc %{_mandir}/man1/*
@@ -153,10 +147,28 @@ rm -f $RPM_BUILD_ROOT/usr/bin/dump
 %{_libdir}/libaugeas.a
 %{_libdir}/libfa.a
 
+%files bash-completion
+%if !0%{?rhel}
+%dir %{bash_completions_dir}
+%{bash_completions_dir}/augmatch
+%{bash_completions_dir}/augprint
+%{bash_completions_dir}/augtool
+%else
+%dir %{_datadir}/bash-completion/completions
+%{_datadir}/bash-completion/completions/augmatch
+%{_datadir}/bash-completion/completions/augprint
+%{_datadir}/bash-completion/completions/augtool
+%endif
+
 %changelog
+* Mon Sep 02 2023 Richard W.M. Jones <rjones@redhat.com> - 1.14.1-1
+- Rebase to Fedora Rawhide
+- Remove patches which are upstream
+- resolves: RHEL-56802
+
 * Fri Jul 19 2024 Cosmin Tupangiu <cosmin@redhat.com> - 1.13.0-5
 - Fix parsing /etc/fstab by allowing comma after last option
-  resolves: RHEL-56992
+  resolves: RHEL-35873
 
 * Tue Apr 04 2023 Richard W.M. Jones <rjones@redhat.com> - 1.13.0-4
 - Fix parsing of /usr/lib/tmpfiles.d/provision.conf
