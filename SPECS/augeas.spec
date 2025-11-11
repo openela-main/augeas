@@ -1,6 +1,6 @@
 Name:           augeas
 Version:        1.14.1
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        A library for changing configuration files
 
 License:        LGPL-2.0-or-later AND LGPL-2.1-only AND LGPL-2.1-or-later AND (GPL-3.0-or-later WITH Bison-exception-2.2) AND Kazlib AND GPL-2.0-or-later AND BSD-2-Clause AND LicenseRef-Fedora-Public-Domain
@@ -13,6 +13,10 @@ Source0:        https://github.com/hercules-team/augeas/releases/download/releas
 # Fix parsing of /etc/fstab
 # Upstream commit 5246ef07381033a9b20426370156dae9f8f97a2c
 Patch:          0001-lenses-fstab.aug-Allow-comma-after-the-last-option-8.patch
+
+# Fix parsing of multipath.conf
+# Upstream commit 6ed6a28c35d2092498f38d72efbec5ed88d9978f
+Patch:          0002-lenses-multipath.aug-Support-all-possible-values-for.patch
 
 Provides:       bundled(gnulib)
 
@@ -161,6 +165,10 @@ rm -f $RPM_BUILD_ROOT/usr/bin/dump
 %endif
 
 %changelog
+* Tue May 27 2025 Richard W.M. Jones <rjones@redhat.com> - 1.14.1-2
+- Fix parsing of multipath.conf
+  resolves: RHEL-93649
+
 * Mon Sep 02 2023 Richard W.M. Jones <rjones@redhat.com> - 1.14.1-1
 - Rebase to Fedora Rawhide
 - Remove patches which are upstream

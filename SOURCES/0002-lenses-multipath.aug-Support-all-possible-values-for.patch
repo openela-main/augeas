@@ -1,0 +1,28 @@
+From 0fccb424e0ebb505fe977447144fd3b20eed138d Mon Sep 17 00:00:00 2001
+From: rwmjones <rjones@redhat.com>
+Date: Thu, 18 Jul 2024 22:51:07 +0100
+Subject: [PATCH 2/2] lenses/multipath.aug: Support all possible values for
+ find_multipaths (#835)
+
+Fixes: https://issues.redhat.com/browse/RHEL-39080
+(cherry picked from commit 6ed6a28c35d2092498f38d72efbec5ed88d9978f)
+---
+ lenses/multipath.aug | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lenses/multipath.aug b/lenses/multipath.aug
+index 9db27d02..c91f5fff 100644
+--- a/lenses/multipath.aug
++++ b/lenses/multipath.aug
+@@ -73,7 +73,7 @@ let default_setting =
+   |kv "polling_interval" Rx.integer
+   |kv "max_polling_interval" Rx.integer
+   |kv "multipath_dir" fspath
+-  |kv "find_multipaths" /yes|no/
++  |kv "find_multipaths" /on|yes|y|off|no|n|strict|greedy|smart/
+   |kv "verbosity" /[0-6]/
+   |kv "reassign_maps" /yes|no/
+   |kv "uid_attrribute" Rx.word
+-- 
+2.47.1
+
