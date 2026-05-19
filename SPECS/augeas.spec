@@ -4,27 +4,26 @@ Summary:        A library for changing configuration files
 License:        LGPL-2.0-or-later AND LGPL-2.1-only AND LGPL-2.1-or-later AND (GPL-3.0-or-later WITH Bison-exception-2.2) AND Kazlib AND GPL-2.0-or-later AND BSD-2-Clause AND LicenseRef-Fedora-Public-Domain
 
 # Upstream Augeas is missing several important fixes which affect
-# Fedora.  For this reason I have taken the regrettable but hopefully
-# temporary step of forking upstream with some extra patches, here:
-# https://github.com/rwmjones/augeas/tree/fedora-43
-
-# Based on:
-#%%global forgeurl https://github.com/hercules-team/%%{name}
-#%%global commit cd37b0945385705afb936caa9d2fd9a7388bb441
-
-# But actually:
-%global forgeurl https://github.com/rwmjones/%{name}
-%global commit 6ee1282259f46e5e44e5bb69d9fa0cf2a255b07d
+# Fedora.  For this reason we have soft-forked augeas, here:
+# https://github.com/rwmjones/augeas
+# See also:
+# https://lists.fedoraproject.org/archives/list/devel@lists.fedoraproject.org/thread/J7SM6NLIMPU7J4LIRBDPTPWVXOKZWWEH/
+# %%global forgeurl https://github.com/hercules-team/augeas
+# %%global commit af2aa88ab37fc48167d8c5e43b1770a4ba2ff403
+%global forgeurl https://github.com/rwmjones/augeas
+%global commit f4135e3496fbc80597942acf60d90391444b1e5b
 %forgemeta
 
-Release:        0.3%{?dist}
+Release:        0.9%{?dist}
 URL:            %{forgeurl}
 Source0:        %{forgesource}
 
 # The problem with packaging from the upstream git repo is that we
 # need to provide our own gnulib submodule.  I created this by doing:
-# git archive --format=tar --prefix=.gnulib/ HEAD | gzip -9 > gnulib-2f7479a16a.tar.gz
+# (cd .gnulib && git archive --format=tar --prefix=.gnulib/ HEAD) |
+#   gzip -9 > gnulib-2f7479a16a.tar.gz
 Source1:        gnulib-2f7479a16a.tar.gz
+
 Provides:       bundled(gnulib)
 
 BuildRequires:  autoconf, automake, libtool
@@ -200,6 +199,13 @@ rm -f $RPM_BUILD_ROOT/usr/bin/dump
 %endif
 
 %changelog
+* Tue Jan 20 2026 Richard W.M. Jones <rjones@redhat.com> - 1.14.2-0.9
+- Fix: fails to parse /etc/fstab when there is a double comma after character
+  resolves: RHEL-77279
+- Fix: fails to parse /etc/iproute2/README and /usr/share/iproute2/
+  resolves: RHEL-113748
+- Synchronize spec file with Fedora
+
 * Mon Feb 24 2025 Richard W.M. Jones <rjones@redhat.com> - 1.14.2-0.3
 - lenses/tmpfiles.aug: Permit '$' character in /usr/lib/tmpfiles.d/*.conf
   resolves: RHEL-76283
